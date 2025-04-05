@@ -28,3 +28,14 @@ export const getDriverById = async (req, res, next) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getDriverByUserId = async (req, res) => {
+  try {
+    const driver = await Driver.findOne({ userId: req.params.userId });
+    if (!driver) return res.status(404).json({ message: "Driver not found" });
+    res.json(driver);
+  } catch (err) {
+    console.error("getDriverByUserId error:", err);
+    res.status(500).json({ message: err.message });
+  }
+};

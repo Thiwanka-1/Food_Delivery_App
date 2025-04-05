@@ -9,5 +9,6 @@ router.post("/add", createDriver);
 
 // Get driver details by ID
 router.get("/get/:id", getDriverById);
+router.get("/user/:userId", getDriverByUserId);
 
 export default router;
