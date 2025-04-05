@@ -15,3 +15,16 @@ export const createDriver = async (req, res, next) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Get driver details by ID
+export const getDriverById = async (req, res, next) => {
+  try {
+    const driver = await Driver.findById(req.params.id);
+    if (!driver) {
+      return res.status(404).json({ message: "Driver not found" });
+    }
+    res.json(driver);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
