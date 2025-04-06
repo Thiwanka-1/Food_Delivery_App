@@ -6,7 +6,8 @@ const router = express.Router();
 
 // Create a new driver record
 router.post("/add", createDriver);
-
+// Update driver location
+router.put("/:id/location", updateDriverLocation);
 // Get driver details by ID
 router.get("/get/:id", getDriverById);
 router.get("/user/:userId", getDriverByUserId);
