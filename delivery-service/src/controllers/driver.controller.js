@@ -125,8 +125,7 @@ export const assignDriverToOrder = async (req, res) => {
       });
     }
 
-    const USER_URL = process.env.USER_SERVICE_URL;
-    const NOTIF_URL = process.env.NOTIFICATION_SERVICE_URL;
+    const USER_URL = process.env.USER_SERVICE_URL1;
 
     // fetch all three user records in parallel
     const [{ data: customer }, { data: driverUser }, { data: ownerUser }] =
@@ -203,7 +202,7 @@ export const assignDriverToOrder = async (req, res) => {
     ]);
 
     return res.json({
-      message: "Driver assigned successfully",
+      message: "Driver assigned successfully.",
       order,
       driver: selected,
     });
