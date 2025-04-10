@@ -1,11 +1,19 @@
 import express from "express";
-import { createDriver } from "../controllers/driver.controller.js";
+import {
+  createDriver,
+  updateDriverLocation,
+  getDriverById,
+  assignDriverToOrder,
+  getDriverByUserId,
+} from "../controllers/driver.controller.js";
 import { verifyToken } from "../utils/verifyUser.js";
 
 const router = express.Router();
 
 // Create a new driver record
 router.post("/add", createDriver);
+
+router.post("/assign", verifyToken, assignDriverToOrder);
 // Update driver location
 router.put("/:id/location", updateDriverLocation);
 // Get driver details by ID
