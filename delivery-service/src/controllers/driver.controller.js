@@ -225,7 +225,10 @@ export const updateDriverAvailability = async (req, res) => {
     if (!updatedDriver) {
       return res.status(404).json({ message: "Driver not found" });
     }
-    res.json({ message: "Driver availability updated", driver: updatedDriver });
+    res.json({
+      message: "Driver availability updated.",
+      driver: updatedDriver,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

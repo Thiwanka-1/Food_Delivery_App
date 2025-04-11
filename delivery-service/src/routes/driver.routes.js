@@ -4,6 +4,7 @@ import {
   updateDriverLocation,
   getDriverById,
   assignDriverToOrder,
+  updateDriverAvailability,
   getDriverByUserId,
 } from "../controllers/driver.controller.js";
 import { verifyToken } from "../utils/verifyUser.js";
@@ -15,7 +16,6 @@ router.post("/add", createDriver);
 
 router.post("/assign", verifyToken, assignDriverToOrder);
 
-router.patch("/confirm-pickup", verifyToken, confirmPickup);
 // Update driver location
 router.put("/:id/location", updateDriverLocation);
 // New endpoint for updating availability
