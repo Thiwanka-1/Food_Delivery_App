@@ -213,6 +213,24 @@ export const assignDriverToOrder = async (req, res) => {
   }
 };
 
+export const updateDriverAvailability = async (req, res) => {
+  try {
+    const { availability } = req.body;
+    const driverId = req.params.id;
+    const updatedDriver = await Driver.findByIdAndUpdate(
+      driverId,
+      { availability },
+      { new: true }
+    );
+    if (!updatedDriver) {
+      return res.status(404).json({ message: "Driver not found" });
+    }
+    res.json({ message: "Driver availability updated", driver: updatedDriver });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getDriverByUserId = async (req, res) => {
   try {
     const driver = await Driver.findOne({ userId: req.params.userId });

@@ -14,8 +14,13 @@ const router = express.Router();
 router.post("/add", createDriver);
 
 router.post("/assign", verifyToken, assignDriverToOrder);
+
+router.patch("/confirm-pickup", verifyToken, confirmPickup);
 // Update driver location
 router.put("/:id/location", updateDriverLocation);
+// New endpoint for updating availability
+router.patch("/:id/availability", verifyToken, updateDriverAvailability);
+
 // Get driver details by ID
 router.get("/get/:id", getDriverById);
 router.get("/user/:userId", getDriverByUserId);
