@@ -234,6 +234,96 @@ export const updateDriverAvailability = async (req, res) => {
   }
 };
 
+export const confirmPickup = async (req, res) => {
+  const { orderId } = req.body;
+  if (!orderId) {
+    return res.status(400).json({ message: "orderId is required" });
+  }
+
+  // Build authConfig exactly as before...
+  const token =
+    req.cookies?.access_token || req.headers.authorization?.split(" ")[1] || "";
+  const authConfig = { headers: { Cookie: `access_token=${token}` } };
+
+  // 1) Update the order status
+  let updatedOrder;
+  try {
+    const ORDER_URL = process.env.ORDER_SERVICE_URL;
+    console.debug("Patching order at:", `${ORDER_URL}/${orderId}/status`);
+    const resp = await axios.patch(
+      `${ORDER_URL}/${orderId}/status`,
+      { status: "picked_up" },
+      authConfig
+    );
+    updatedOrder = resp.data;
+  } catch (err) {
+    console.error(
+      "Order status update failed:",
+      err.response?.status,
+      err.response?.data
+    );
+    // If the order really wasn’t found:
+    if (err.response?.status === 404) {
+      return res
+        .status(404)
+        .json({ message: "Order not found when marking picked_up" });
+    }
+    return res.status(500).json({
+      message: "Could not update order status: " + (err.message || err),
+    });
+  }
+
+  // 2) Broadcast to your clients
+  if (req.app.locals.io) {
+    req.app.locals.io.emit("orderPickedUp", { orderId });
+  }
+
+  // 3) Fetch customer & notify — same as before…
+  try {
+    const USER_URL = process.env.USER_SERVICE_URL;
+    const customer = (
+      await axios.get(`${USER_URL}/${updatedOrder.userId}`, authConfig)
+    ).data;
+    const NOTIF_URL = process.env.NOTIFICATION_SERVICE_URL;
+    const subject = `Your Order ${orderId} Is On Its Way`;
+    const text = `Good news! Your order (${orderId}) has been picked up and is on its way to you.`;
+
+    await axios.post(
+      `${NOTIF_URL}/email`,
+      {
+        to: customer.email,
+        subject,
+        text,
+        type: "order_picked_up",
+        payload: { orderId },
+      },
+      authConfig
+    );
+
+    if (customer.phoneNumber) {
+      await axios.post(
+        `${NOTIF_URL}/sms`,
+        {
+          to: customer.phoneNumber,
+          message: text,
+          type: "order_picked_up",
+          payload: { orderId },
+        },
+        authConfig
+      );
+    }
+  } catch (notifyErr) {
+    console.error("Notify customer failed:", notifyErr);
+    // but we don’t want to fail the whole request if notification breaks
+  }
+
+  // 4) Return the updated order
+  return res.json({
+    message: "Order marked as picked up and customer notified",
+    order: updatedOrder,
+  });
+};
+
 export const getDriverByUserId = async (req, res) => {
   try {
     const driver = await Driver.findOne({ userId: req.params.userId });
