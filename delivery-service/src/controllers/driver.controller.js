@@ -324,6 +324,140 @@ export const confirmPickup = async (req, res) => {
   });
 };
 
+export const confirmDelivery = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    if (!orderId) {
+      return res.status(400).json({ message: "orderId is required" });
+    }
+
+    // 1) Build auth config for inter-service calls
+    const token =
+      req.cookies?.access_token ||
+      req.headers.authorization?.split(" ")[1] ||
+      "";
+    const authConfig = { headers: { Cookie: `access_token=${token}` } };
+
+    // 2) Mark the order delivered
+    const ORDER_URL = process.env.ORDER_SERVICE_URL;
+    const { data: updatedOrder } = await axios.patch(
+      `${ORDER_URL}/${orderId}/status`,
+      { status: "delivered" },
+      authConfig
+    );
+
+    // 3) Reset driver availability
+    const driverId = updatedOrder.driverId;
+    const DELIVERY_URL = process.env.DELIVERY_SERVICE_URL;
+    if (driverId) {
+      await axios.patch(
+        `${DELIVERY_URL}/${driverId}/availability`,
+        { availability: "available" },
+        authConfig
+      );
+    }
+
+    // 4) Broadcast Socket.IO event for front-end tracking
+    const io = req.app.locals.io;
+    if (io) {
+      io.emit("orderDelivered", { orderId, driverId });
+    }
+
+    // 5) Fetch contacts
+    const USER_URL = process.env.USER_SERVICE_URL;
+    const NOTIF_URL = process.env.NOTIFICATION_SERVICE_URL;
+
+    // Fetch customer
+    const { data: customer } = await axios.get(
+      `${USER_URL}/${updatedOrder.userId}`,
+      authConfig
+    );
+
+    // Fetch driver record (to get their userId), then fetch driver user
+    let driverUser = null;
+    if (driverId) {
+      const { data: driverDoc } = await axios.get(
+        `${DELIVERY_URL}/get/${driverId}`,
+        authConfig
+      );
+      if (driverDoc?.userId) {
+        const { data } = await axios.get(
+          `${USER_URL}/${driverDoc.userId}`,
+          authConfig
+        );
+        driverUser = data;
+      }
+    }
+
+    // 6) Notify Customer
+    const custSubject = `Order ${orderId} Delivered`;
+    const custText = `Good news! Your order (${orderId}) has arrived. Enjoy!`;
+
+    await axios.post(
+      `${NOTIF_URL}/email`,
+      {
+        to: customer.email,
+        subject: custSubject,
+        text: custText,
+        type: "order_delivered",
+        payload: { orderId },
+      },
+      authConfig
+    );
+    if (customer.phoneNumber) {
+      await axios.post(
+        `${NOTIF_URL}/sms`,
+        {
+          to: customer.phoneNumber,
+          message: custText,
+          type: "order_delivered",
+          payload: { orderId },
+        },
+        authConfig
+      );
+    }
+
+    // 7) Notify Driver (if available)
+    if (driverUser) {
+      const drvSubject = `Order ${orderId} Delivery Confirmed`;
+      const drvText = `You have successfully delivered order (${orderId}). Thank you!`;
+
+      await axios.post(
+        `${NOTIF_URL}/email`,
+        {
+          to: driverUser.email,
+          subject: drvSubject,
+          text: drvText,
+          type: "order_delivered",
+          payload: { orderId },
+        },
+        authConfig
+      );
+      if (driverUser.phoneNumber) {
+        await axios.post(
+          `${NOTIF_URL}/sms`,
+          {
+            to: driverUser.phoneNumber,
+            message: drvText,
+            type: "order_delivered",
+            payload: { orderId },
+          },
+          authConfig
+        );
+      }
+    }
+
+    // 8) Return success
+    return res.json({
+      message: "Delivery confirmed & notifications sent",
+      order: updatedOrder,
+    });
+  } catch (error) {
+    console.error("confirmDelivery error:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 export const getDriverByUserId = async (req, res) => {
   try {
     const driver = await Driver.findOne({ userId: req.params.userId });
