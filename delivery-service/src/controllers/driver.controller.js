@@ -390,7 +390,7 @@ export const confirmDelivery = async (req, res) => {
     }
 
     // 6) Notify Customer
-    const custSubject = `Order ${orderId} Delivered`;
+    const custSubject = `Order ${orderId} Delivered.`;
     const custText = `Good news! Your order (${orderId}) has arrived. Enjoy!`;
 
     await axios.post(

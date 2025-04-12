@@ -6,6 +6,7 @@ import {
   assignDriverToOrder,
   updateDriverAvailability,
   confirmPickup,
+  confirmDelivery,
   getDriverByUserId,
 } from "../controllers/driver.controller.js";
 import { verifyToken } from "../utils/verifyUser.js";
