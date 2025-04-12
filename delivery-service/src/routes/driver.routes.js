@@ -19,6 +19,8 @@ router.post("/add", createDriver);
 router.post("/assign", verifyToken, assignDriverToOrder);
 
 router.patch("/confirm-pickup", verifyToken, confirmPickup);
+// New endpoint for confirming delivery
+router.patch("/confirm-delivery", verifyToken, confirmDelivery);
 // Update driver location
 router.put("/:id/location", updateDriverLocation);
 // New endpoint for updating availability
