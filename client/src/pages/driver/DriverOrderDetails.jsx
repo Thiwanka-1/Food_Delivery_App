@@ -149,6 +149,27 @@ export default function DriverOrderDetails() {
   };
   const mapCenter = driverLoc || restaurantPos;
 
+  // 4️⃣ Confirm pickup
+  const handleConfirmPickup = async () => {
+    setPickupLoading(true);
+    try {
+      const res = await fetch("/api/drivers/confirm-pickup", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message);
+      }
+      setStatus("picked_up");
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setPickupLoading(false);
+    }
+  };
   const openInMaps = () => {
     if (!driverLoc) return;
     const dest = status === "driver_assigned" ? restaurantPos : deliveryPos;
