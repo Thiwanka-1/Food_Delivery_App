@@ -12,13 +12,13 @@ export default function DriverOrders() {
 
   useEffect(() => {
     fetch("/api/orders/driver", { credentials: "include" })
-      .then(async res => {
+      .then(async (res) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Failed to load");
         return data;
       })
       .then(setOrders)
-      .catch(err => setError(err.message))
+      .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
@@ -59,9 +59,9 @@ export default function DriverOrders() {
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
       <main className="flex-1 p-8 space-y-6">
-        <h1 className="text-3xl font-bold">My Assigned Orders</h1>
+        <h1 className="text-3xl font-bold">My Assigned Orders.</h1>
         <div className="space-y-4">
-          {orders.map(o => (
+          {orders.map((o) => (
             <div
               key={o._id}
               onClick={() => navigate(`/driver/orders/${o._id}`)}
