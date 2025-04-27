@@ -170,6 +170,30 @@ export default function DriverOrderDetails() {
       setPickupLoading(false);
     }
   };
+
+  // 5️⃣ Confirm delivery
+  const handleConfirmDelivery = async () => {
+    setDeliveryLoading(true);
+    try {
+      const res = await fetch("/api/drivers/confirm-delivery", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message);
+      }
+      setStatus("delivered");
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setDeliveryLoading(false);
+    }
+  };
+
+  // 6️⃣ Open in Google Maps
   const openInMaps = () => {
     if (!driverLoc) return;
     const dest = status === "driver_assigned" ? restaurantPos : deliveryPos;
